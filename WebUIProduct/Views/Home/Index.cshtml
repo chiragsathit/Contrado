@@ -1,0 +1,351 @@
+﻿@{
+    ViewData["Title"] = "Home Page";
+}
+@model CommonConfig 
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+<script src="https://code.jquery.com/jquery-3.2.1.slim.min.js" integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN" crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js" integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q" crossorigin="anonymous"></script>
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js" integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl" crossorigin="anonymous"></script>
+
+<script>
+    function check_delete(id) {
+        if (confirm("Are you sure? you want to delete product?")) {
+            document.getElementById('hidProductId').value = id;
+            document.getElementById('frmDeleteProduct').submit();
+        }
+        return false;
+    }
+    var myFunc;
+    function edit_data(pid) {
+
+        $.ajax({
+            type: "GET",
+            url: "@Url.Action("getProductCategory", "Home")",
+            success: function (result) {
+                console.log(JSON.parse(result));
+                var APIData = JSON.parse(result);
+                document.getElementById("ddlCategory").options.length = 0;
+                var x = document.getElementById("ddlCategory");
+                var option = document.createElement("option");
+                option.text = "Select Category";
+                option.value = "0";
+                x.add(option);
+                if (APIData.error_code == 0) {
+                    var x = document.getElementById("ddlCategory");
+                    for (var i = 0; i < APIData.data.length; i++) {
+                        var option = document.createElement("option");
+                        option.text = APIData.data[i].categoryName;
+                        option.value = APIData.data[i].prodCatId;
+                        x.add(option);
+                    }
+                }
+                else {
+                    alert(APIData.message);
+                }
+            },
+            complete: function () {
+                myFunc = setInterval(function () { setEditDataAfterInterval(pid); }, 500);
+            }
+        });
+
+
+    }
+    function setEditDataAfterInterval(pid) {
+        document.getElementById("hidPid").value = pid;
+        document.getElementById("ddlCategory").value = document.getElementById("hidCatId_" + pid).value;
+        document.getElementById("txtProductName").value = document.getElementById("prodname_" + pid).innerHTML;
+        document.getElementById("txtProductDesc").value = document.getElementById("proddesc_" + pid).innerHTML;
+        document.getElementById("exampleModalLabel").innerHTML = "Edit Product";
+        document.getElementById("btnAddProduct").innerHTML = "Edit Product";
+        document.getElementById("hidActionSaveUpdate").value = "Update";
+        clearInterval(myFunc);
+    }
+    function setProductValues() {
+        document.getElementById("exampleModalLabel").innerHTML = "Add Product";
+        document.getElementById("btnAddProduct").innerHTML = "Add Product";
+        document.getElementById("hidActionSaveUpdate").value = "Save";
+        document.getElementById("txtProductName").value = "";
+        document.getElementById("txtProductDesc").value = "";
+    }
+    function GetProductCategoryTableView() {
+        $.ajax({
+            type: "GET",
+            url: "@Url.Action("getProductCategory", "Home")",
+            success: function (result) {
+                console.log(JSON.parse(result));
+                var APIData = JSON.parse(result);
+                myFunc = setInterval(function () { generateTableView(APIData); }, 500);
+                
+            }
+        });
+    }
+    function delete_category(id) {
+        if (confirm("Are you sure? you want to delete category?")) {
+            document.getElementById('hidCategoryId').value = id;
+            document.getElementById('frmDeleteCategory').submit();
+        }
+        return false;
+    }
+    function generateTableView(APIData) {
+        var strTable = "<table id='categoryTable' class='table table-sm table-bordered table-striped display'>";
+        strTable += "<thead><tr><th>Category Name</th><th>Action</th></tr></thead><tbody>";
+        if (APIData.error_code == 0) {
+            for (var i = 0; i < APIData.data.length; i++) {
+                strTable += "<tr><td id='catName1_" + APIData.data[i].prodCatId+"'>" + APIData.data[i].categoryName + "</td>";
+                strTable += "<td><input type='button' onclick='edit_category(" + APIData.data[i].prodCatId + ")' class='btn btn-sm btn-warning' value='Edit' />";
+                strTable += "&nbsp;&nbsp;<input type='button' onclick='delete_category(" + APIData.data[i].prodCatId + ")' class='btn btn-sm btn-danger' value='Delete' /></td></tr></thead>";
+            }
+        }
+        else {
+            alert(APIData.message);
+        }
+        strTable += "</tbody></table>";
+        console.log(strTable);
+        document.getElementById("strTableCategory").innerHTML = strTable;
+        $('#categoryTable').DataTable({ "scrollY": "250px", "pageLength": 5 });
+        document.getElementById("txtCategoryName").value = "";
+        document.getElementById("btnAddCat").innerHTML = "Add";
+        document.getElementById("hidActionCategorySaveUpdate").value = "Save";
+        clearInterval(myFunc);
+    }
+    function edit_category(id) {
+        document.getElementById("hidCid").value = id;
+        document.getElementById("txtCategoryName").value = document.getElementById("catName1_" + id).innerHTML;
+        document.getElementById("btnAddCat").innerHTML = "Edit";
+        document.getElementById("hidActionCategorySaveUpdate").value = "Update";
+    }
+
+    function GetProductCategory() {
+        $.ajax({
+            type: "GET",
+            url: "@Url.Action("getProductCategory", "Home")",
+            success: function (result) {
+                console.log(JSON.parse(result));
+                var APIData = JSON.parse(result);
+                document.getElementById("ddlCategory").options.length = 0;
+                var x = document.getElementById("ddlCategory");
+                var option = document.createElement("option");
+                option.text = "Select Category";
+                option.value = "0";
+                x.add(option);
+                if (APIData.error_code == 0) {
+                    var x = document.getElementById("ddlCategory");
+                    for (var i = 0; i < APIData.data.length; i++) {
+                        var option = document.createElement("option");
+                        option.text = APIData.data[i].categoryName;
+                        option.value = APIData.data[i].prodCatId;
+                        x.add(option);
+                    }
+                }
+                else {
+                    alert(APIData.message);
+                }
+            }
+        });
+    }
+    function validateAddProduct() {
+        if (validateddlCategory() && validatetxtProductName() && validatetxtProductDesc()) {
+            document.getElementById("frmAddProduct").submit();
+        }
+    }
+    function validateddlCategory() {
+        var v_var = $('#ddlCategory');
+        if (v_var[0].selectedIndex == 0) {
+            v_var.addClass("is-invalid");
+            return false;
+        } else {
+            v_var.removeClass("is-invalid");
+            return true;
+        }
+    }
+    function validatetxtProductName() {
+        var v_var = $('#txtProductName');
+        if ($.trim(v_var[0].value) == "") {
+            v_var.addClass("is-invalid");
+            return false;
+        } else {
+            v_var.removeClass("is-invalid");
+            return true;
+        }
+    }
+    function validatetxtProductDesc() {
+        var v_var = $('#txtProductDesc');
+        if ($.trim(v_var[0].value) == "") {
+            v_var.addClass("is-invalid");
+            return false;
+        } else {
+            v_var.removeClass("is-invalid");
+            return true;
+        }
+    }
+    function validateAddCategory() {
+        var v_var = $('#txtCategoryName');
+        if ($.trim(v_var[0].value) == "") {
+            v_var.addClass("is-invalid");
+            return false;
+        } else {
+            v_var.removeClass("is-invalid");
+            document.getElementById("frmAddCategory").submit();
+        }
+    }
+
+</script>
+<form action="@Url.Action("Delete", "Home")" method="post" id="frmDeleteProduct" name="frmDeleteProduct">
+    <input type="hidden" id="hidProductId" name="hidProductId" value="" />
+    @Html.AntiForgeryToken()
+</form>
+<form action="@Url.Action("DeleteCategory", "Home")" method="post" id="frmDeleteCategory" name="frmDeleteCategory">
+    <input type="hidden" id="hidCategoryId" name="hidCategoryId" value="" />
+    @Html.AntiForgeryToken()
+</form>
+<div class="modal fade" id="dialogProduct" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="exampleModalLabel">Add Product</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form action="@Url.Action("AddProduct", "Home")" method="post" id="frmAddProduct" name="frmAddProduct">
+                    <div class="form-group" id="divddlCategory">
+                        <label for="ddlCategory">Product Category</label>
+                        <select class="form-control" id="ddlCategory" tabindex="1" name="ddlCategory">
+                            <option>Select Category</option>
+                        </select>
+                    </div>
+                    <div class="form-group" id="divtxtProductName">
+                        <label for="txtProductName">Product Name</label>
+                        <input type="text" required maxlength="250" tabindex="2" class="form-control" id="txtProductName" name="txtProductName" placeholder="Product Name">
+                    </div>
+                    <div class="form-group" id="divtxtProductDesc">
+                        <label for="txtProductName">Product Description</label>
+                        <input type="text" required class="form-control" tabindex="3" id="txtProductDesc" name="txtProductDesc" placeholder="Product Description">
+                    </div>
+                    <input type="hidden" id="hidActionSaveUpdate" name="hidActionSaveUpdate" value="Save" />
+                    <input type="hidden" id="hidPid" name="hidPid" value="0" />
+                    @Html.AntiForgeryToken()
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" tabindex="5" data-dismiss="modal">Close</button>
+                
+                <button type="button" class="btn btn-primary" tabindex="4" onclick="validateAddProduct()" id="btnAddProduct">Add Product</button>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="modal fade" id="dialogCategory" tabindex="-1" role="dialog" aria-labelledby="modalTitle" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modalTitle">Manage Category</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form action="@Url.Action("AddCategory", "Home")" method="post" id="frmAddCategory" name="frmAddCategory">
+                    <div class="input-group mb-1" id="divtxtCategoryName">
+                        <input type="text" required maxlength="250" tabindex="=1" class="form-control" id="txtCategoryName" name="txtCategoryName" placeholder="Category Name" aria-label="Category Name" aria-describedby="basic-addon2">
+                        <div class="input-group-append">
+                            <button class="btn btn-outline-secondary" id="btnAddCat" onclick="validateAddCategory()" type="button">Add</button>
+                        </div>
+                    </div>
+                    <input type="hidden" id="hidActionCategorySaveUpdate" name="hidActionCategorySaveUpdate" value="Save" />
+                    <input type="hidden" id="hidCid" name="hidCid" value="0" />
+                    @Html.AntiForgeryToken()
+                </form>
+                <div class="mt-1 mb-1">
+                    <h5 class="text-center">View Category</h5>
+                    <hr />
+                    <div id="strTableCategory">
+
+                    </div>
+                </div>
+            </div>
+            
+        </div>
+    </div>
+</div>
+<div class="text-center">
+    <h4 class="alert alert-dark"> Product List</h4>
+    <hr />
+    @if (ViewBag.DeleteMessage != null)
+    {
+        <div class="alert alert-info p-2">@ViewBag.DeleteMessage </div>
+    }
+    @if (ViewBag.Message != null)
+    {
+        <div class="alert alert-info p-2">@ViewBag.Message </div>
+    }
+    @if (TempData["Message"] != null)
+    {
+        <div class="alert alert-info p-2">@TempData["Message"] </div>
+    }
+
+    @if (ViewBag.MainData != null)
+    {
+        <div class="p-1">
+            <div class="row">
+                <div class="col-4 p-2 bg-warning">
+                    <input type="button" value="Add Product" onclick="setProductValues()" data-toggle="modal" data-target="#dialogProduct" class="btn btn-sm btn-success" />
+                </div>
+                <div class="col-4 p-2 bg-warning">
+                    <input type="button" value="Manage Category" data-toggle="modal" data-target="#dialogCategory"  class="btn btn-sm btn-primary" />
+                </div>
+                <div class="col-4 p-2 bg-warning">
+                    <input type="button" value="Product Atrribute" onclick="alert('Not manage.')" class="btn btn-sm btn-danger" />
+                </div>
+            </div>
+        </div>
+        <table id="productTable" class="table table-sm table-bordered table-striped display">
+            <thead>
+                <tr>
+                    <th>Category Name</th>
+                    <th>Product Name</th>
+                    <th>Product Description</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var objData in ViewBag.MainData)
+                {
+                    <tr>
+                        <td>
+                            @objData.categoryName
+                            <input type="hidden" id="hidCatId_@objData.productId" value="@objData.prodCatId" />
+                        </td>
+                        <td id="prodname_@objData.productId">@objData.prodName</td>
+                        <td id="proddesc_@objData.productId">@objData.prodDescription</td>
+                        <td>
+                            <input type="button" onclick="edit_data(@objData.productId)" data-toggle="modal" data-target="#dialogProduct" class="btn btn-sm btn-warning" value="Edit Product" />
+                            <input type="button" onclick="check_delete(@objData.productId)" class="btn btn-sm btn-danger" value="Delete Product" />
+                        </td>
+                    </tr>
+                }
+            </tbody>
+
+        </table>
+    }
+
+</div>
+@* Load datatable css *@
+<link href="//cdn.datatables.net/1.10.9/css/jquery.dataTables.min.css" rel="stylesheet" />
+@* Load datatable js *@
+@section Scripts{
+    <script src="//cdn.datatables.net/1.10.9/js/jquery.dataTables.min.js"></script>
+    <script src="//code.jquery.com/ui/1.10.4/jquery-ui.js"></script>
+    <script>
+        $(document).ready(function () {
+            $('#productTable').DataTable({ "scrollY": "250px", "pageLength": 5 });
+            $('#dialogProduct').on('show.bs.modal', function (e) {
+                GetProductCategory();
+            });
+            $('#dialogCategory').on('show.bs.modal', function (e) {
+                GetProductCategoryTableView();
+            });
+        });
+    </script>
+}
